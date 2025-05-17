@@ -1,0 +1,78 @@
+/* Main window styling */
+QWidget {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+/* Chat display area */
+#textEdit {
+    background-color: #ffffff;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    font-size: 14px;
+    padding: 10px;
+    selection-background-color: #90caf9;
+    color: #333333;
+}
+
+/* Message input field */
+#lineEdit {
+    border: 1px solid #adb5bd;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+    margin-right: 8px;
+    background-color: white;
+    color:black;
+}
+
+#lineEdit:focus {
+    border-color:rgb(52, 11, 236);
+    outline: none;
+}
+
+/* Send button */
+#pushButton {
+    background-color: rgb(45, 10, 202);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 14px;
+    min-width: 80px;
+}
+
+#pushButton:hover {
+    background-color:rgb(59, 39, 243);
+}
+
+#pushButton:pressed {
+    background-color:rgb(23, 16, 230);
+}
+
+#pushButton:disabled {
+    background-color:rgb(71, 19, 228);
+    color: #666666;
+}
+
+#textEdit#user-message{
+    color: #2c3e50;  /* Dark blue-gray for user messages */
+    font-weight: 500;
+    margin-bottom: 4px;
+    background-color:#007bff;
+    padding:10px;
+}
+
+
+
+/* Scrollbar styling */
+#textEdit QScrollBar:vertical {
+    width: 12px;
+    background: transparent;
+}
+
+#textEdit QScrollBar::handle:vertical {
+    background: #dee2e6;
+    border-radius: 6px;
+    min-height: 20px;
+}
