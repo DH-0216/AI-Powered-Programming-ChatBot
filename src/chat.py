@@ -1,14 +1,20 @@
 import os
 from PyQt6.QtWidgets import QWidget
+from PyQt6.QtCore import QTimer
 from ui.chatbot_ui import Ui_Form
-import openai
+import google.generativeai as genai
 from predefined_responses import predefined_responses
 from fuzzywuzzy import process
 from dotenv import load_dotenv
 
 load_dotenv()
 
-openai.api_key = os.getenv('OPENAIKEY')
+API_KEY = os.getenv("GOOGLE_API_KEY")
+genai.configure(api_key=API_KEY)
+
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+chat = model.start_chat(history=[])
 
 class ChatBotGUI(QWidget, Ui_Form): 
     def __init__(self):
@@ -17,32 +23,57 @@ class ChatBotGUI(QWidget, Ui_Form):
        
         self.setWindowTitle("AI-Powered Programming ChatBot")
         self.setGeometry(100, 100, 500, 600)
-
+        self.textEdit.setReadOnly(True)
         
         self.pushButton.clicked.connect(self.get_response)
         self.lineEdit.returnPressed.connect(self.get_response) 
 
        
         self.load_stylesheet("./assets/chat.qss")
-
+        greeting = "Hello! I'm your AI programming assistant. How can I help you today? 😊"
+        self.append_message(greeting, "left")
     
+    def show_typing_indicator(self):  
+        self.append_message("typing ...", "left")
+        self.typing_index = self.textEdit.document().lineCount() - 1
+
+    def remove_typing_indicator(self):
+        cursor = self.textEdit.textCursor()
+        cursor.movePosition(cursor.MoveOperation.End)
+        cursor.select(cursor.SelectionType.LineUnderCursor)
+        cursor.removeSelectedText()
+        cursor.deletePreviousChar()
+        
     # This function is triggered when the user presses the send button or hits Enter.
     def get_response(self):
         user_message = self.lineEdit.text().strip() 
         if user_message:
             self.append_message(user_message, "right")
+            self.lineEdit.clear()
+            self.pushButton.setEnabled(False)
+            self.lineEdit.setEnabled(False)
+            self.show_typing_indicator()
             
-            # Try to get a predefined response first
-            bot_response = self.get_predefined_response(user_message)
-            
-            # If no predefined response, process the message with OpenAI GPT
-            if not bot_response:
-                bot_response = self.process_message(user_message)
-            
-            # Display the bot's response in the UI
-            self.append_message(bot_response, "left")
-            self.lineEdit.clear() 
-            
+            # Use QTimer to delay processing and allow UI to update
+            QTimer.singleShot(1000, lambda: self.process_response(user_message))
+
+    def process_response(self, user_message):
+        # Try to get a predefined response first
+        bot_response = self.get_predefined_response(user_message)
+        
+        # If no predefined response, use Gemini AI
+        if not bot_response:
+            bot_response = self.process_message(user_message)
+        
+        self.handle_bot_reply(bot_response)
+        
+        
+    def handle_bot_reply(self, bot_reply):
+        self.remove_typing_indicator()
+        self.append_message(bot_reply, "left")
+        self.pushButton.setEnabled(True)
+        self.lineEdit.setEnabled(True)
+        self.lineEdit.setFocus()        
             
             
     # This function appends messages to the textEdit widget with appropriate formatting.
@@ -59,7 +90,7 @@ class ChatBotGUI(QWidget, Ui_Form):
         
         self.textEdit.append(formatted_message)
         self.textEdit.ensureCursorVisible()
-     
+        self.lineEdit.setFocus()
      
     # This function checks if the message is a predefined response.    
     def get_predefined_response(self, message):
@@ -90,14 +121,10 @@ class ChatBotGUI(QWidget, Ui_Form):
     
     # This function processes the message using OpenAI's GPT-4 API.
     def process_message(self, message):
-        """Process the message with OpenAI's GPT-4 API."""
+   
         try:
-            response = openai.completions.create(
-                model="gpt-4o",  
-                prompt=message,
-                max_tokens=150
-            )
-            return response.choices[0].text.strip() 
+            response = chat.send_message(message)
+            return response.text.strip()
         except Exception as e:
             return f"Error: {str(e)}" 
         
